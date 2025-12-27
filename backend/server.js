@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-require("dotenv").config();
+const env = require("dotenv").config();
 
 const app = express();
 
@@ -13,9 +13,10 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/protected", require("./routes/protectedRoutes"));
 app.use("/api", require("./routes/slotRoutes"));
 app.use("/api/airline", require("./routes/airlinesRoute"));
+app.use("/api/counters", require("./routes/countersRoute"));
 
 mongoose
-  .connect("mongodb://localhost:27017/abc")
+  .connect(process.env.MONGODB_URI)
   .then(() => console.log("MONGODB_URI"))
   .catch((err) => console.log(err));
 
