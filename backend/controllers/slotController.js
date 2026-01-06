@@ -1,4 +1,3 @@
-const mongoose = require("mongoose");
 const SlotRequest = require("../models/SlotRequest");
 
 const canEdit = (status) =>
@@ -15,6 +14,10 @@ exports.createSlot = async (req, res) => {
       aircraftType,
       requestedArrivalTime,
       requestedDepartureTime,
+      startDate,
+      scheduleType,
+      operatingDays,
+      endDate,
     } = req.body;
     if (!flightNumber || !sector || !aircraftType) {
       return res.status(400).json({
@@ -36,12 +39,16 @@ exports.createSlot = async (req, res) => {
       origin,
       destination,
       aircraftType,
-      requestedArrivalTime: new Date(requestedArrivalTime).toISOString(),
-
-      requestedDepartureTime: new Date(requestedDepartureTime).toISOString(),
+      requestedArrivalTime,
+      requestedDepartureTime,
+      endDate,
+      startDate,
       status: "submitted",
+      scheduleType,
+      operatingDays,
+      createdBy: req.user,
     });
-    console.log(slot);
+
     return res.status(201).json({
       message: "Slot Request submitted.",
       data: slot,
@@ -70,11 +77,113 @@ exports.getSubmittedSLotData = async (req, res) => {
   }
 };
 
+exports.pendingRecommendationSlotData = async (req, res) => {
+  try {
+    const pendingRecommendation = await SlotRequest.find({
+      status: "submitted",
+    }).populate("airlineId", "airlineName");
+
+    return res.status(200).json({
+      data: pendingRecommendation,
+      message: "Data pending for Recommendation",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+
+exports.pendingApprovalSlotData = async (req, res) => {
+  try {
+    const approvalRecommendation = await SlotRequest.find({
+      status: "fp_recommended",
+    }).populate("airlineId", "airlineName");
+
+    return res.status(201).json({
+      data: approvalRecommendation,
+      message: "Data pending for Head Office Approval",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+
+exports.flightPermissionRecommendedTime = async (req, res, next) => {
+  try {
+    const { slotId, recommendedArrivalTime, recommendedDepartureTime, note } =
+      req.body;
+    const fp_user = req.user._id;
+
+    const slot = await SlotRequest.findById(slotId);
+    if (!slot) {
+      return res.status(404).json({ message: "Slot request not found" });
+    }
+
+    // status guard
+    if (slot.status !== "submitted") {
+      return res.status(400).json({
+        message: "Slot request is not in submitted state",
+      });
+    }
+
+    await SlotRequest.findByIdAndUpdate(slot._id, {
+      $set: {
+        status: "fp_recommended",
+        "flightPermission.recommendedArrivalTime": recommendedArrivalTime,
+        "flightPermission.recommendedDepartureTime": recommendedDepartureTime,
+        "flightPermission.note": note,
+        "flightPermission.reviewedBy": fp_user,
+        "flightPermission.reviewedAt": new Date(),
+      },
+    });
+
+    return res.json({ message: "Flight permission recommendation saved" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.headOfficeApprovedSchedule = async (req, res) => {
+  try {
+    const { slotId, decisionNote } = req.body;
+    const ho_user = req.user._id;
+
+    const slot = await SlotRequest.findById(slotId);
+    if (!slot) {
+      return res.status(404).json({ message: "Slot request not found" });
+    }
+
+    // status guard
+    if (slot.status !== "fp_recommended") {
+      return res.status(400).json({
+        message: "Slot request is not in submitted state",
+      });
+    }
+
+    await SlotRequest.findByIdAndUpdate(slot._id, {
+      $set: {
+        status: "ho_approved",
+        "flightPermission.decisionNote": decisionNote,
+        "headOffice.decidedBy": ho_user,
+      },
+    });
+
+    return res.json({ message: "Head Office Approved" });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+
 exports.getApprovedSlotData = async (req, res) => {
   try {
     const approvedSlotData = await SlotRequest.find({
       airlineId: req.user.airlinesName,
-      status: "approved",
+      status: "ho_approved",
     }).populate("airlineId", "airlineName");
 
     return res.status(200).json(approvedSlotData);

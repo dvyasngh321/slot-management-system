@@ -14,6 +14,7 @@ app.use("/api/protected", require("./routes/protectedRoutes"));
 app.use("/api", require("./routes/slotRoutes"));
 app.use("/api/airline", require("./routes/airlinesRoute"));
 app.use("/api/counters", require("./routes/countersRoute"));
+app.use("/api/aircraft", require("./routes/congestionRoute"));
 
 mongoose
   .connect(process.env.MONGODB_URI)

@@ -5,7 +5,6 @@ const generateToken = require("../utils/generateToken");
 // 🛑 Admin creates users
 exports.registerUser = async (req, res) => {
   const { name, email, password, role, airlinesName } = req.body;
-  console.log(airlinesName);
 
   if (!role) {
     return res.status(400).json({ message: "Role is required" });

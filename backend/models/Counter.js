@@ -6,8 +6,8 @@ const CounterSchema = new mongoose.Schema(
       enum: ["A", "B"],
       required: true,
     },
-    number: {
-      type: Number,
+    counterNos: {
+      type: [Number],
       required: true,
     },
     isActive: {
@@ -18,10 +18,10 @@ const CounterSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-CounterSchema.index({ side: 1, number: 1 });
+CounterSchema.index({ side: 1, counterNos: 1 }, { unique: true });
 
 CounterSchema.virtual("counterCode").get(function () {
-  return `${this.side}${this.number}`;
+  return `${this.side}${this.counterNo}`;
 });
 
 CounterSchema.set("toJSON", { virtuals: true });

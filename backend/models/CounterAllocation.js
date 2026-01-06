@@ -1,51 +1,64 @@
 const mongoose = require("mongoose");
 
-const CounterAllocationSchema = new mongoose.Schema(
+const counterAllocationSchema = new mongoose.Schema(
   {
-    applicationId: {
+    counterApplicationId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CounterApplication",
       required: true,
     },
-    slotApprovalId: {
+    slotId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "SlotRequest",
       required: true,
     },
-    airlineId: {
+    user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    side: {
+    counterSide: {
       type: String,
       enum: ["A", "B"],
       required: true,
     },
-    counters: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Counter",
-        required: true,
-      },
-    ],
+    counterNos: {
+      type: [Number],
+      required: true,
+    },
     startTime: {
-      type: Date,
+      type: String,
       required: true,
     },
     endTime: {
-      type: Date,
+      type: String,
       required: true,
     },
-    aircraftType: {
+    status: {
       type: String,
-      enum: ["NarrowBody", "WideBody"],
+      enum: ["active", "cancelled"],
+      default: "active",
+    },
+
+    cancelledAt: {
+      type: Date,
+    },
+    cancelReason: {
+      type: String,
     },
   },
   { timestamps: true }
 );
 
-CounterAllocationSchema.index({ side: 1, startTime: 1, endTime: 1 });
-CounterAllocationSchema.index({ counters: 1, startTime: 1, endTime: 1 });
+counterAllocationSchema.index({
+  counterSide: 1,
+  counterNo: 1,
+  startTime: 1,
+  endTime: 1,
+  status: 1,
+});
 
-module.exports = mongoose.model("CounterAllocation", CounterAllocationSchema);
+module.exports = new mongoose.model(
+  "CounterAllocation",
+  counterAllocationSchema
+);

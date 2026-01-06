@@ -30,12 +30,30 @@ const slotRequestSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    startDate: {
+      type: Date,
+      required: true,
+    },
+    endDate: {
+      type: Date,
+      required: true,
+    },
     aircraftType: {
       type: String,
+      enum: ["NARROWBODY", "WIDEBODY"],
       trim: true,
     },
-    requestedArrivalTime: { type: Date },
-    requestedDepartureTime: { type: Date },
+    scheduleType: {
+      type: String,
+      enum: ["DAILY", "WEEKLY_DAYS", "ONCE"],
+      required: true,
+    },
+    operatingDays: {
+      type: [Number],
+      default: [],
+    },
+    requestedArrivalTime: { type: String },
+    requestedDepartureTime: { type: String },
     status: {
       type: String,
       enum: [
@@ -50,8 +68,8 @@ const slotRequestSchema = new mongoose.Schema(
       default: "submitted",
     },
     flightPermission: {
-      recommendedArrivalTime: Date,
-      recommendedDepartureTime: Date,
+      recommendedArrivalTime: String,
+      recommendedDepartureTime: String,
       note: String,
       reviewedBy: {
         type: mongoose.Schema.Types.ObjectId,

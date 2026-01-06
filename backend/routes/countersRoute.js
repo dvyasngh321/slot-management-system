@@ -1,34 +1,48 @@
 const { Router } = require("express");
 const {
+  checkAvailability,
+  getAssignedCounters,
+  findAvailableCountersByDeparture,
+} = require("../controllers/counterAllocation");
+const {
   applyForCounters,
-  sedAllocateCounters,
+
   getMyAllocations,
   getCountersApplication,
 } = require("../controllers/counterControllers.js");
+
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 
 const router = Router();
 
+router.get("/assigned-counters", protect, getAssignedCounters);
 // AIRLINE
 router.post("/apply", protect, authorizeRoles("airlines"), applyForCounters);
-router.get(
-  "/my-allocations",
+router.post(
+  "/find-available-counters",
   protect,
-  authorizeRoles("airlines"),
-  getMyAllocations
+  authorizeRoles("sed"),
+  findAvailableCountersByDeparture
 );
+// router.get(
+//   "/my-allocations",
+//   protect,
+//   authorizeRoles("airlines"),
+//   getMyAllocations
+// );
 
 // SED
+
 router.post(
-  "/sed/allocate/:applicationId",
+  "/check-availability",
   protect,
   authorizeRoles("sed"),
-  sedAllocateCounters
+  checkAvailability
 );
 router.get(
-  "/applications",
+  "/application",
   protect,
-  authorizeRoles("sed"),
+  authorizeRoles("sed", "airlines"),
   getCountersApplication
 );
 
